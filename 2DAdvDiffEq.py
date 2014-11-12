@@ -84,15 +84,14 @@ dy=L/float(Ny-1)
 ## time parameters 
 t=0
 tend = 2*pi
-dt =.25*min(dx,dy)**2/(1./Pe + max(dx,dy))
-
+dt =0.01*dx*dx
 ## scheme parameters
 # Laplacian terms
-lx = 1/Pe*dt/dx/dx
-ly=1/Pe*dt/dy/dy
-# Advection terms
-ax = dt/(2.*dx)
-ay = alpha*dt/(2.*dy)
+lx = 1.*dt/dx/dx
+ly=1.*dt/dy/dy
+# Adv terms
+ax =.5*dt/dx
+ay=.5*dt/dy*alpha
 
 #plot axis
 zmin = -1.2 
@@ -146,7 +145,8 @@ while t<=tend :
 	u_old = u_arr
 	for i in range(0,Nx):
 			for j in range(0,Ny):
-				u_arr[i][j]=u_old[i][j]*(1.-2.*(lx + ly)) + u_old[(i-1)%Nx][j]*(lx+ax)+u_old[(i+1)%Nx][j]*(lx-ax)+u_old[i][(j-1)%Ny]*(lx+ay)+u_old[i][(j+1)%Ny]*(ly-ay)
+			    u_arr[i][j]=u_old[i][j]*(1.-2.*(lx + ly)) + u_old[(i-1)%Nx][j]*(lx + ax)+u_old[(i+1)%Nx][j]*(lx - ax)+u_old[i][(j-1)%Ny]*(ly + ay)+u_old[i][(j+1)%Ny]*(ly - ay)
+					    
 
 	step=step+1
 	if step%stepSize == 0:
