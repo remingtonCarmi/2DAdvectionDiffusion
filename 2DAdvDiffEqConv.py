@@ -16,6 +16,10 @@ import errno
 ## IC u[x,y,0]=cos(x)+cos(y) 
 ## Convergence test
 
+##Physical parameter
+Pe = 1.0
+L=2*pi
+alpha = 0. #velocity ration between x an y direction chose alpha smaller than 1
 
 ##################################################################################################################
 ############################			Useful functions		      ############################
@@ -43,7 +47,7 @@ def errorL2(f,dx,dy,nx,ny):
         for i in range(1,int((nx-1)/2)):
 		for j in range(1,int((ny-1)/2)):
 			error = error + 4.*f[2*i][2*j]		
-	return error*1./9.*dx*dy
+	return (error*1./9.*dx*dy)**.5
 
 ## Initial conditions
 def iCond(x,y):
@@ -51,8 +55,8 @@ def iCond(x,y):
 
 
 #Exact solution
-def u_exact(x,y,t,alpha):
-	return 0.5*exp(-1/Pe*t)*cos(x-t)+0.5*exp(-1/Pe*t)*cos(y-alpha*t)
+def u_exact(x,y,t,Pe):
+	return exp(-t/Pe)*(.5*cos(x-t) + .5*cos(y))
 
 ## Create a one row vector from the matrix u_arr
 def matrixToVec(u,nx,ny):
@@ -74,15 +78,12 @@ def vecToMatrix(u,nx,ny):
 ############################				End			      ############################
 ##################################################################################################################
 #Simulation parameters
-tend = 0.5
-##Physical parameter
-Pe = 4.0
-L=2*pi
-alpha = 0. #velocity ration between x an y direction chose alpha smaller than 1
+tend = 0.05
+
 
 error=[]
 ## Series of N to try
-N = [25,50,100]
+N = [25,51,101]
 for k in range(0,3):
         t=0
 	## Discretization parameter 
@@ -92,18 +93,18 @@ for k in range(0,3):
 	dy=L/float(Ny-1)
 
 	## time parameters 
-	dt =.25*min(dx,dy)**2/(1./Pe + max(dx,dy))
+	dt =.01*dx**2
 	#to make sure tend is reached and stability ok
-	dt = tend/float(int(tend/dt)+1)
+	#dt = tend/float(int(tend/dt)+1)
 
 	## scheme parameters
 	# Laplacian terms
-	lx = 1./Pe*dt/dx/dx
-	ly=1./Pe*dt/dy/dy
+	lx =1.*dt/dx/dx
+	ly=1.*dt/dy/dy
 
 	# Advection terms
-	ax = dt/(2.*dx)	
-	ay = alpha*dt/(2.*dy)
+	ax = .5*dt/dx	
+	ay = .5*alpha*dt/dy
 
 	## Figure numbering 
 	numb = 0
@@ -115,31 +116,34 @@ for k in range(0,3):
     			u_arr[i][j] = uval
 
 	## Construction of the update matrix
-	A = [[0 for i in xrange(Ny*Nx)] for i in xrange(Nx*Ny)]
-	
-	for i in range(0,Nx):
-		for j in range(0,Ny):      
-			A[i*Ny+j][i*Ny+j]=1-2.*(lx+ly)
-			A[i*Ny+j][i*Ny+(j+1)%Ny] = ly+ay
-			A[i*Ny+j][i*Ny+(j-1)%Ny] = ly-ay  
-			A[i*Ny+j][((i+1)%Nx)*Ny+j] = lx-ax
-			A[i*Ny+j][((i-1)%Nx)*Ny+j] = lx+ax
+	#A = [[0 for i in xrange(Ny*Nx)] for i in xrange(Nx*Ny)]
+	#for i in range(0,Nx):
+	#	for j in range(0,Ny):      
+	#		A[i*Ny+j][i*Ny+j]=1-2.*(lx+ly)
+	#		A[i*Ny+j][i*Ny+(j+1)%Ny] = ly+ay
+	#		A[i*Ny+j][i*Ny+(j-1)%Ny] = ly-ay  
+	#		A[i*Ny+j][((i+1)%Nx)*Ny+j] = lx-ax
+	#		A[i*Ny+j][((i-1)%Nx)*Ny+j] = lx+ax
 	#convert u_arr to u_vec
-	u_vec = matrixToVec(u_arr,Nx,Ny)
+	#u_vec = matrixToVec(u_arr,Nx,Ny)
 	##Time loop
 	while t<tend-1e-6 :
 		t=t+dt
 		print repr(t)
 		#update u_vec
-		u_vec = np.dot(A,u_vec)
+		#u_vec = np.dot(A,u_vec)
+		u_old = u_arr
+		for i in range(0,Nx):
+			for j in range(0,Ny):
+				u_arr[i][j]=u_old[i][j]*(1.-2.*(lx + ly)) + u_old[(i-1)%Nx][j]*(lx+ax)+u_old[(i+1)%Nx][j]*(lx-ax)+u_old[i][(j-1)%Ny]*(lx+ay)+u_old[i][(j+1)%Ny]*(ly-ay)
 
-	u_arr=vecToMatrix(u_vec,Nx,Ny)
+	#u_arr=vecToMatrix(u_vec,Nx,Ny)
 	##Calculate the error
 	
 	f = [[0 for i in xrange(Ny)] for i in xrange(Nx)]
 	for i in range(0,Nx):
 		for j in range(0,Ny):
-			f[i][j] = u_arr[i][j]-u_exact(i*dx,j*dy,t,alpha)
+			f[i][j] =u_arr[i][j]- u_exact(i*dx,j*dy,t,Pe)
 			f[i][j]=f[i][j]**2
 
         err=errorL2(f,dx,dy,Nx,Ny)
