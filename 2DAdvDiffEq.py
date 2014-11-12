@@ -83,7 +83,8 @@ def plotFig(u_arr,numb,t):
 	surf = ax.plot_surface(X, Y, u_arr,v, rstride=1, cstride=1,cmap=cm.jet,
  	       linewidth=0, antialiased=False, vmin=zmin, vmax=zmax)
 	ax.set_zlim(zmin, zmax)
-	
+	ax.set_xlim(0, L)
+	ax.set_ylim(0, L)
 	ax.zaxis.set_major_locator(LinearLocator(10))
 	ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
 	
@@ -98,9 +99,9 @@ for i in range(0,Nx):
 	for j in range(0,Ny):      
 		A[i*Ny+j][i*Ny+j]=1-2.*(lx+ly)
 		A[i*Ny+j][i*Ny+(j+1)%Ny] = ly+ay
-		A[i*Ny+j][i*Ny+j-1] = ly-ay  
+		A[i*Ny+j][i*Ny+(j-1)%Ny] = ly-ay  
 		A[i*Ny+j][((i+1)%Nx)*Ny+j] = lx-ax
-		A[i*Ny+j][(i-1)*Ny+j] = lx+ax
+		A[i*Ny+j][((i-1)%Nx)*Ny+j] = lx+ax
 
 print 'The matrix is generated'
 
