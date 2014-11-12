@@ -74,8 +74,8 @@ for i in range(0,Nx):
 def plotFig(u_arr,numb,t):
 	fig = plt.figure()
 	ax = fig.gca(projection='3d')
-	X = np.arange(0, L, dx)
-	Y = np.arange(0, L, dy)
+	X = np.arange(0, L+dx, dx)
+	Y = np.arange(0, L+dy, dy)
 	X, Y = np.meshgrid(X, Y)
 	R = np.sqrt(X**2 + Y**2)
 	Z = np.sin(R)
